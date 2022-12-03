@@ -103,9 +103,9 @@ class AzureUtils:
             logging.error(f"Error downloadning blob {blob_name}: {e}")
         return df
     
-    def ingest_raw_data(self, directory, blob_name_starts_with):
-        blob_list = self.list_blobs(f"raw/{directory}", blob_name_starts_with)
-        df = pd.concat([self.download_csv_blob(f"raw/{directory}", blob.name) for blob in blob_list], ignore_index = True)
+    def ingest_raw_data(self, blob_name_starts_with):
+        blob_list = self.list_blobs(f"raw", blob_name_starts_with)
+        df = pd.concat([self.download_csv_blob(f"raw", blob.name) for blob in blob_list], ignore_index = True)
         return df
     
     def list_blobs(self, container, blob_name_starts_with):
@@ -162,7 +162,7 @@ class Booli:
                     "ascending":false
                 }
             },
-            "query":"query searchForSale($input: SearchRequest) { search: searchForSale(input: $input) { pages totalCount result { __typename ... on Listing { booliId descriptiveAreaName constructionYear floor{raw} livingArea{raw} listPrice{raw} listSqmPrice{raw} latitude longitude daysActive objectType rent{raw} operatingCost{raw} estimate{ price{raw} } rooms{raw} streetAddress url isNewConstruction biddingOpen upcomingSale mortgageDeed tenureForm plotArea{raw} hasPatio hasBalcony hasFireplace}} __typename  }}"
+            "query":"query searchForSale($input: SearchRequest) { search: searchForSale(input: $input) { pages totalCount result { __typename ... on Listing { booliId descriptiveAreaName constructionYear floor{raw} livingArea{raw} listPrice{raw} rent{raw} listSqmPrice{raw} latitude longitude daysActive objectType rent{raw} operatingCost{raw} estimate{ price{raw} } rooms{raw} streetAddress url isNewConstruction biddingOpen upcomingSale mortgageDeed tenureForm plotArea{raw} hasPatio hasBalcony hasFireplace}} __typename  }}"
         }"""
         headers = {
             'authority': "www.booli.se",
@@ -214,7 +214,7 @@ class Booli:
                     "ascending": false        
                 }    
             },    
-            "query": "query searchSold($input: SearchRequest) {  search: searchSold(input: $input) {    pages    totalCount    result {      booliId      soldPrice {raw}      streetAddress       constructionYear       floor{raw}      soldSqmPrice {raw}      soldPriceAbsoluteDiff {raw}      soldPricePercentageDiff {raw}      listPrice {raw}      livingArea {raw}      rooms {raw}      rooms {raw}      objectType      descriptiveAreaName      soldPriceType      daysActive      soldDate      latitude      longitude      url      __typename    }    __typename  }}"    
+            "query": "query searchSold($input: SearchRequest) {  search: searchSold(input: $input) {    pages    totalCount    result {      booliId      soldPrice {raw}   rent{raw}   streetAddress       constructionYear       floor{raw}      soldSqmPrice {raw}      soldPriceAbsoluteDiff {raw}      soldPricePercentageDiff {raw}      listPrice {raw}      livingArea {raw}      rooms {raw}      rooms {raw}      objectType      descriptiveAreaName      soldPriceType      daysActive      soldDate      latitude      longitude      url      __typename    }    __typename  }}"    
         }"""
         headers = {
             'authority': "www.booli.se",
@@ -272,6 +272,9 @@ class DataCleaning:
     
     def get_data_types(self, df):
         return pd.DataFrame({"Data Type" : df.dtypes})
+    
+    def rename_df_columns(self, df, columns_to_rename):
+        return df.rename(columns = columns_to_rename)
     
 class FeatureEngineering:
     def __init__(self):
