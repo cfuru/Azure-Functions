@@ -185,7 +185,7 @@ class Booli:
         else:
             raise Exception("Query failed to run: {} - {}".format(response.status_code, response.json()))
         
-    def run_query_sold(self, object_type, minSoldDate, maxSoldDate, rooms, area_id, page):
+    def run_query_sold(self, object_type, minSoldDate, maxSoldDate, rooms, hasBalcony, hasFireplace, hasElevator, area_id, page):
         payload = """{    
             "operationName": "searchSold",    
             "variables": {
@@ -206,7 +206,19 @@ class Booli:
                         {                    
                             "key": "rooms",                    
                             "value": "%s"                
-                        }            
+                        },
+                         {                    
+                            "key": "hasBalcony",                    
+                            "value": "%s"                
+                        },
+                        {                    
+                            "key": "hasFireplace",                    
+                            "value": "%s"                
+                        },
+                        {                    
+                            "key": "hasElevator",                    
+                            "value": "%s"                
+                        }
                     ],        
                     "areaId": "%s",        
                     "sort": "created",        
@@ -230,7 +242,7 @@ class Booli:
             'sec-fetch-site': "same-origin",
             'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36 Edg/103.0.1264.77"
         }
-        response = requests.post(self.path, data = payload % (object_type, minSoldDate, maxSoldDate, rooms, area_id, page), headers=headers) # Throws 400
+        response = requests.post(self.path, data = payload % (object_type, minSoldDate, maxSoldDate, rooms, hasBalcony, hasFireplace, hasElevator, area_id, page), headers=headers) # Throws 400
         
         if response.status_code == 200:
             return response.json()
