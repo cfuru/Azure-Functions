@@ -16,8 +16,8 @@
             {
                 "name": "Attach to both apps",
                 "configurations": [
-                    "Attach to app1",
-                    "Attach to app2"
+                    "Attach to func-booli-scraper-001",
+                    "Attach to func-yahoo-scraper-001"
                 ]
             }
         ]

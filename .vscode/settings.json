@@ -1,9 +1,0 @@
-{
-    "azureFunctions.projectSubpath": "func-booli-scraper-001",
-    "azureFunctions.deploySubpath": "func-booli-scraper-001",
-    "azureFunctions.scmDoBuildDuringDeployment": true,
-    "azureFunctions.pythonVenv": ".venv",
-    "azureFunctions.projectLanguage": "Python",
-    "azureFunctions.projectRuntime": "~4",
-    "debug.internalConsoleOptions": "neverOpen"
-}
