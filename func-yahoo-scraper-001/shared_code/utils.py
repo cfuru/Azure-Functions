@@ -109,6 +109,11 @@ class AzureUtils:
         df = pd.concat([self.download_parquet_blob("bronze", blob.name) for blob in blob_list], ignore_index = True)
         return df
     
+    def ingest_silver_data(self, directory):
+        blob_list = self.list_blobs("silver", directory)
+        df = pd.concat([self.download_parquet_blob("silver", blob.name) for blob in blob_list], ignore_index = True)
+        return df
+    
     def list_blobs(self, container, blob_name_starts_with):
         try:
             container_client_instance = blob_service_client_instance.get_container_client(container)
