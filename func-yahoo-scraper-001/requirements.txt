@@ -12,6 +12,6 @@ datetime
 pandas
 numpy
 pyarrow
-yfinance==0.2.3
+yfinance==0.2.17
 requests
 lxml

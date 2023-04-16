@@ -158,9 +158,9 @@ class yahooUtils:
             temp.reset_index(inplace = True)
             temp.columns = ["Attribute", "Recent"]
             temp["Ticker"] = ticker
+            return temp
         except Exception as e:
             print(e)
-        return temp
 
 #Structure created by Sarah Floris
 class DataCleaning:

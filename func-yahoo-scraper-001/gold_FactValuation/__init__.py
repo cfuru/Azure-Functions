@@ -20,34 +20,34 @@ def main(mytimer: func.TimerRequest) -> None:
     sa_name = azure_utils.get_key_vault_secret(secret_client, 'sa-name')
     azure_utils.initialize_storage_account_ad(sa_secret.value, sa_name.value)
     
+    fact_valuation = azure_utils.download_parquet_blob(f"gold/factvaluation", f"fact_valuation.parquet")
+    
     selected_cols = [
-        'Ticker',
-        'zip', 
-        'sector', 
-        'longBusinessSummary',
-        'city',
-        'country', 
-        'website',
-        'address1',
-        'industry',
-        'longName',
-        'financialCurrency',
-        'exchange',
-        'isEsgPopulated',
-        'quoteType'
+        "Ticker",
+        "ObservationDate",
+        "mostRecentQuarter",
+        "enterpriseToRevenue",
+        "enterpriseToEbitda",
+        "forwardEps",
+        "trailingEps",
+        "enterpriseValue",
+        "forwardPE",
+        "trailingPE",
+        "marketCap"
     ]
     
-    df_cleaning = (
-        azure_utils.ingest_bronze_data(f"fundamentals/{date.today()}")
-        .pipe(dataCleaning_utils.pivot_fundamentals_dataframe)
+    df_valuation = (
+        azure_utils.ingest_silver_data(f"fundamentals/fundamentals_")
         .pipe(dataCleaning_utils.select_dataframe_columns, selected_cols)
     )
     
-    df_cleaning = df_cleaning.astype(str)
+    fact_valuation = fact_valuation.set_index(["Ticker", "ObservationDate"])
+    df_valuation = df_valuation.set_index(["Ticker", "ObservationDate"])
+    fact_valuation = pd.concat([df_valuation[~df_valuation.index.isin(fact_valuation.index)], fact_valuation]).reset_index()
 
-    parquet_file = df_cleaning.to_parquet(index = False)
+    parquet_file = fact_valuation.to_parquet(index = False)
 
-    azure_utils.upload_blob(parquet_file, f"silver/company", f"company_{date.today()}.parquet")
+    azure_utils.upload_blob(parquet_file, f"gold/factvaluation", f"fact_valuation.parquet")
     
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()

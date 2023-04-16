@@ -20,34 +20,19 @@ def main(mytimer: func.TimerRequest) -> None:
     sa_name = azure_utils.get_key_vault_secret(secret_client, 'sa-name')
     azure_utils.initialize_storage_account_ad(sa_secret.value, sa_name.value)
     
-    selected_cols = [
-        'Ticker',
-        'zip', 
-        'sector', 
-        'longBusinessSummary',
-        'city',
-        'country', 
-        'website',
-        'address1',
-        'industry',
-        'longName',
-        'financialCurrency',
-        'exchange',
-        'isEsgPopulated',
-        'quoteType'
-    ]
-    
-    df_cleaning = (
-        azure_utils.ingest_bronze_data(f"fundamentals/{date.today()}")
-        .pipe(dataCleaning_utils.pivot_fundamentals_dataframe)
-        .pipe(dataCleaning_utils.select_dataframe_columns, selected_cols)
+    dim_company = azure_utils.download_parquet_blob(f"gold/dimcompany", f"dim_company.parquet")
+        
+    df_company = (
+        azure_utils.ingest_silver_data(f"company/company_")
     )
     
-    df_cleaning = df_cleaning.astype(str)
+    dim_company = dim_company.set_index("Ticker")
+    df_company = df_company.set_index("Ticker")
+    dim_company = pd.concat([df_company[~df_company.index.isin(dim_company.index)], dim_company]).reset_index()
+    
+    parquet_file = dim_company.to_parquet(index = False)
 
-    parquet_file = df_cleaning.to_parquet(index = False)
-
-    azure_utils.upload_blob(parquet_file, f"silver/company", f"company_{date.today()}.parquet")
+    azure_utils.upload_blob(parquet_file, "gold/dimcompany", "dim_company.parquet")
     
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
