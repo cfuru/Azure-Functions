@@ -21,7 +21,7 @@ def main(msg: func.QueueMessage) -> None:
 
         sa_secret = os.getenv("AZURE_STORAGE_SECRET")#azure_utils.get_key_vault_secret(secret_client, 'sa-secret')
         sa_name = os.getenv("AZURE_STORAGE_NAME")#azure_utils.get_key_vault_secret(secret_client, 'sa-name')
-        azure_utils.initialize_storage_account_ad(sa_secret.value, sa_name.value)
+        azure_utils.initialize_storage_account_ad(sa_secret, sa_name)
 
         # Get financials data and upload to Blob Storage
         fetch_and_upload_financials(ticker, azure_utils)
