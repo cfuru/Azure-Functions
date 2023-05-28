@@ -3,6 +3,7 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions
+azure-functions-durable
 azure-storage-blob==12.12.0
 azure-storage-file-datalake
 azure-identity
@@ -15,3 +16,4 @@ pyarrow
 yfinance==0.2.17
 requests
 lxml
+asyncio

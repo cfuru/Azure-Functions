@@ -135,6 +135,7 @@ class yahooUtils:
     def __init__(self):
         self.nasdaq_base_url = "http://www.nasdaqomxnordic.com" 
         self.nasdaq_full_url = self.nasdaq_base_url + "/shares/listed-companies/stockholm"
+        self.sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 
     def scrape_nasdaq_companies(self):
         headers = {"User-Agent": "Mozilla/5.0 (X11; CrOS x86_64 12871.102.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36"}
@@ -150,6 +151,10 @@ class yahooUtils:
         # here we create the ticker names for the queries to Yahoo Finance
         df_companies['tickers'] = ["-".join(i.split(" "))+".ST" for i in df_companies['symbol'].values]
         return df_companies
+
+    def scrape_sp500_comapnies(self):
+        data = pd.read_html(self.sp500_url)
+        return data[0]
 
     def get_ticker_financials(self, ticker):
         try:

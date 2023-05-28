@@ -5,7 +5,7 @@
       "name": "msg",
       "type": "queueTrigger",
       "direction": "in",
-      "queueName": "processing",
+      "queueName": "nasdaqomxsstockholm-tickers",
       "connection": "AzureWebJobsStorage"
     }
   ]
