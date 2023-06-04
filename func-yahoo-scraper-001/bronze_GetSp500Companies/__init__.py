@@ -11,9 +11,6 @@ import azure.functions as func
 from shared_code import utils
 
 def main(mytimer: func.TimerRequest) -> None:
-    if mytimer.past_due:
-        logging.info('The timer is past due!')
-        
     try:
         azure_utils = utils.AzureUtils()
         secret_client = azure_utils.initialize_key_vault()
@@ -41,7 +38,7 @@ def main(mytimer: func.TimerRequest) -> None:
 def upload_companies_data(companies, azure_utils):
     """Upload companies data to Azure Blob Storage and send company tickers to Azure Queue."""
     try:
-        for ticker in companies.tickers:
+        for ticker in companies.Symbol:
             azure_utils.send_queue_message(ticker)
         
         parquet_file = companies.to_parquet(index = False)

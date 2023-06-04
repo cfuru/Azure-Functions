@@ -14,6 +14,7 @@ pandas
 numpy
 pyarrow
 yfinance==0.2.17
+yahooquery
 requests
 lxml
 asyncio

@@ -8,6 +8,7 @@ from lxml import html
 from io import BytesIO
 from io import StringIO
 from datetime import date
+from yahooquery import Ticker
 from azure.storage.blob import BlobServiceClient
 from azure.storage.filedatalake import DataLakeServiceClient
 from azure.identity import DefaultAzureCredential
@@ -166,6 +167,109 @@ class yahooUtils:
             return temp
         except Exception as e:
             print(e)
+
+class StockFundamentals:
+    def __init__(self, symbol):
+        self.symbol = symbol
+        self.ticker = Ticker(self.symbol)
+        self.income_statement = None
+        self.balance_sheet = None
+        self.cash_flow = None
+
+    def fetch_data(self):
+        self.income_statement = self.ticker.income_statement(frequency = 'q', trailing = False).sort_values('asOfDate').set_index("asOfDate")
+        self.balance_sheet = self.ticker.balance_sheet(frequency = 'q', trailing = False).sort_values('asOfDate').set_index("asOfDate")
+        self.cash_flow = self.ticker.cash_flow(frequency = 'q', trailing = False).sort_values('asOfDate').set_index("asOfDate")
+
+class PiotroskiScoreCalculator:
+    def __init__(self, stock):
+        self.stock = stock
+        self.date = None
+        self.prev_date = None
+
+    def set_dates(self, date):
+        self.date = date
+        self.prev_date = self.stock.balance_sheet.index[self.stock.balance_sheet.index.get_loc(date) - 1]
+
+    def calculate_roa_score(self):
+        roa = self.stock.income_statement.loc[self.date, 'NetIncome'] / self.stock.balance_sheet.loc[self.date, 'TotalAssets']
+        return 1 if roa > 0 else 0
+
+    def calculate_cfo_score(self):
+        cfo = self.stock.cash_flow.loc[self.date, 'OperatingCashFlow']
+        return 1 if cfo > 0 else 0
+
+    def calculate_delta_roa_score(self):
+        roa = self.stock.income_statement.loc[self.date, 'NetIncome'] / self.stock.balance_sheet.loc[self.date, 'TotalAssets']
+        delta_roa = roa - (self.stock.income_statement.loc[self.prev_date, 'NetIncome'] / \
+                           self.stock.balance_sheet.loc[self.prev_date, 'TotalAssets'])
+        return 1 if delta_roa > 0 else 0
+
+    def calculate_quality_of_earnings_score(self):
+        cfo = self.stock.cash_flow.loc[self.date, 'OperatingCashFlow']
+        return 1 if cfo > self.stock.income_statement.loc[self.date, 'NetIncome'] else 0
+
+    def calculate_delta_leverage_score(self):
+        delta_leverage = self.stock.balance_sheet.loc[self.date, 'LongTermDebt'] / self.stock.balance_sheet.loc[self.date, 'TotalAssets'] - \
+                         self.stock.balance_sheet.loc[self.prev_date, 'LongTermDebt'] / self.stock.balance_sheet.loc[self.prev_date, 'TotalAssets']
+        return 1 if delta_leverage < 0 else 0
+
+    def calculate_delta_liquidity_score(self):
+        delta_liquidity = (self.stock.balance_sheet.loc[self.date, 'CurrentAssets'] / self.stock.balance_sheet.loc[self.date, 'CurrentLiabilities']) - \
+                          (self.stock.balance_sheet.loc[self.prev_date, 'CurrentAssets'] / self.stock.balance_sheet.loc[self.prev_date, 'CurrentLiabilities'])
+        return 1 if delta_liquidity > 0 else 0
+
+    def calculate_new_equity_score(self):
+        new_equity = self.stock.balance_sheet.loc[self.date, 'CommonStock'] - \
+                     self.stock.balance_sheet.loc[self.prev_date, 'CommonStock']
+        return 1 if new_equity <= 0 else 0
+
+    def calculate_gross_margin_score(self):
+        gross_margin_now = (self.stock.income_statement.loc[self.date, 'TotalRevenue'] - \
+                            self.stock.income_statement.loc[self.date, 'CostOfRevenue']) / self.stock.income_statement.loc[self.date, 'TotalRevenue']
+        gross_margin_prev = (self.stock.income_statement.loc[self.prev_date, 'TotalRevenue'] - \
+                             self.stock.income_statement.loc[self.prev_date, 'CostOfRevenue']) / self.stock.income_statement.loc[self.prev_date, 'TotalRevenue']
+        return 1 if gross_margin_now > gross_margin_prev else 0
+
+    def calculate_asset_turnover_score(self):
+        asset_turnover_now = self.stock.income_statement.loc[self.date, 'TotalRevenue'] / self.stock.balance_sheet.loc[self.date, 'TotalAssets']
+        asset_turnover_prev = self.stock.income_statement.loc[self.prev_date,
+        'TotalRevenue'] / self.stock.balance_sheet.loc[self.prev_date, 'TotalAssets']
+        return 1 if asset_turnover_now > asset_turnover_prev else 0
+
+    def calculate_score(self):
+        self.stock.fetch_data()
+        score_data = []
+
+        for date in self.stock.balance_sheet.index[1:]:
+            self.set_dates(date)
+
+            roa_score = self.calculate_roa_score()
+            cfo_score = self.calculate_cfo_score()
+            delta_roa_score = self.calculate_delta_roa_score()
+            quality_of_earnings_score = self.calculate_quality_of_earnings_score()
+            delta_leverage_score = self.calculate_delta_leverage_score()
+            delta_liquidity_score = self.calculate_delta_liquidity_score()
+            new_equity_score = self.calculate_new_equity_score()
+            gross_margin_score = self.calculate_gross_margin_score()
+            asset_turnover_score = self.calculate_asset_turnover_score()
+
+            total_score = sum([roa_score, cfo_score, delta_roa_score, quality_of_earnings_score, delta_leverage_score,
+                                delta_liquidity_score, new_equity_score, gross_margin_score, asset_turnover_score])
+            
+            # Save the data
+            score_data.append([date, roa_score, cfo_score, delta_roa_score, quality_of_earnings_score, 
+                               delta_leverage_score, delta_liquidity_score, new_equity_score, 
+                               gross_margin_score, asset_turnover_score, total_score])
+
+        # Convert the data into a DataFrame
+        scores_df = pd.DataFrame(score_data, columns=['Date', 'ROA', 'CFO', 'Delta ROA', 'Quality of Earnings', 
+                                                      'Delta Leverage', 'Delta Liquidity', 'New Equity', 
+                                                      'Gross Margin', 'Asset Turnover', 'Piotroski Score'])
+        scores_df.set_index('Date', inplace=True)
+
+        return scores_df
+
 
 #Structure created by Sarah Floris
 class DataCleaning:

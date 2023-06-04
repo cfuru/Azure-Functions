@@ -11,9 +11,6 @@ import azure.functions as func
 from shared_code import utils
 
 def main(mytimer: func.TimerRequest) -> None:
-    if mytimer.past_due:
-        logging.info('The timer is past due!')
-        
     try:
         azure_utils = utils.AzureUtils()
         secret_client = azure_utils.initialize_key_vault()

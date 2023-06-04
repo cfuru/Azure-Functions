@@ -30,16 +30,31 @@ def main(msg: func.QueueMessage) -> None:
         logging.error(f'Error occurred: {str(e)}')
         
 def fetch_and_upload_financials(ticker, azure_utils):
-    """Fetch financials data using yfinance and upload to Azure Blob Storage."""
+    all_scores = []
+    
     try:
-        yahoo_utils = utils.yahooUtils()
-        fundamentals = yahoo_utils.get_ticker_financials(ticker)
-        fundamentals = fundamentals.astype(str)  # Pyarrow has a problem with numpy.dtypes so this is a workaround, hopefully will be fixed in later releases. 
-        fundamentals["ObservationDate"] = date.today()
-
-        parquet_file = fundamentals.to_parquet(index = False)
-
-        azure_utils.upload_blob(parquet_file, f"bronze/fundamentals/sp500/{date.today()}", f"Fundamentals_{ticker}.parquet")
-
+        stock = utils.StockFundamentals(ticker)
+        income_statement = stock.income_statement
+        balance_sheet = stock.balance_sheet
+        cash_flow = stock.cash_flow
+        
+        calculator = utils.PiotroskiScoreCalculator(stock)
+        scores = calculator.calculate_score()
+        scores['Ticker'] = ticker  # add a column for the ticker
+        all_scores.append(scores)
+        scores_df = pd.concat(all_scores)
+        
+        parquet_file = stock.income_statement.to_parquet(index = False)
+        azure_utils.upload_blob(parquet_file, f"bronze/IncomeStatement/sp500/{date.today()}", f"IncomeStatement_{ticker}.parquet")
+        
+        parquet_file = stock.balance_sheet.to_parquet(index = False)
+        azure_utils.upload_blob(parquet_file, f"bronze/BalanceSheet/sp500/{date.today()}", f"BalanceSheet_{ticker}.parquet")
+        
+        parquet_file = stock.cash_flow.to_parquet(index = False)
+        azure_utils.upload_blob(parquet_file, f"bronze/CashFlow/sp500/{date.today()}", f"CashFlow_{ticker}.parquet")
+        
+        parquet_file = scores_df.to_parquet(index = False)
+        azure_utils.upload_blob(parquet_file, f"bronze/PiotroskiScore/sp500/{date.today()}", f"PiotroskiScore_{ticker}.parquet")
+        
     except Exception as e:
         logging.error(f'Error occurred while fetching and uploading financials data: {str(e)}')
