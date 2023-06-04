@@ -178,9 +178,14 @@ class StockFundamentals:
 
     def fetch_data(self):
         self.income_statement = self.ticker.income_statement(frequency = 'q', trailing = False).sort_values('asOfDate').set_index("asOfDate")
+        self.income_statement["Ticker"] = self.symbol
+        
         self.balance_sheet = self.ticker.balance_sheet(frequency = 'q', trailing = False).sort_values('asOfDate').set_index("asOfDate")
+        self.balance_sheet["Ticker"] = self.symbol
+        
         self.cash_flow = self.ticker.cash_flow(frequency = 'q', trailing = False).sort_values('asOfDate').set_index("asOfDate")
-
+        self.cash_flow["Ticker"] = self.symbol
+                
 class PiotroskiScoreCalculator:
     def __init__(self, stock):
         self.stock = stock

@@ -34,9 +34,6 @@ def fetch_and_upload_financials(ticker, azure_utils):
     
     try:
         stock = utils.StockFundamentals(ticker)
-        income_statement = stock.income_statement
-        balance_sheet = stock.balance_sheet
-        cash_flow = stock.cash_flow
         
         calculator = utils.PiotroskiScoreCalculator(stock)
         scores = calculator.calculate_score()
