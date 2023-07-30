@@ -41,17 +41,26 @@ def fetch_and_upload_financials(ticker, azure_utils):
         all_scores.append(scores)
         scores_df = pd.concat(all_scores)
         
-        parquet_file = stock.income_statement.to_parquet(index = False)
+        parquet_file = stock.income_statement.reset_index().to_parquet(index = False)
         azure_utils.upload_blob(parquet_file, f"bronze/IncomeStatement/sp500/{date.today()}", f"IncomeStatement_{ticker}.parquet")
         
-        parquet_file = stock.balance_sheet.to_parquet(index = False)
+        parquet_file = stock.balance_sheet.reset_index().to_parquet(index = False)
         azure_utils.upload_blob(parquet_file, f"bronze/BalanceSheet/sp500/{date.today()}", f"BalanceSheet_{ticker}.parquet")
         
-        parquet_file = stock.cash_flow.to_parquet(index = False)
+        parquet_file = stock.cash_flow.reset_index().to_parquet(index = False)
         azure_utils.upload_blob(parquet_file, f"bronze/CashFlow/sp500/{date.today()}", f"CashFlow_{ticker}.parquet")
         
-        parquet_file = scores_df.to_parquet(index = False)
+        parquet_file = stock.valuation_measure.reset_index().to_parquet(index = False)
+        azure_utils.upload_blob(parquet_file, f"bronze/ValuationMeasure/sp500/{date.today()}", f"ValuationMeasure_{ticker}.parquet")
+        
+        parquet_file = scores_df.reset_index().to_parquet(index = False)
         azure_utils.upload_blob(parquet_file, f"bronze/PiotroskiScore/sp500/{date.today()}", f"PiotroskiScore_{ticker}.parquet")
         
+        parquet_file = stock.asset_profile.reset_index().to_parquet(index = False)
+        azure_utils.upload_blob(parquet_file, f"bronze/AssetProfile/sp500/{date.today()}", f"AssetProfile_{ticker}.parquet")
+        
+        parquet_file = stock.financial_data.reset_index().to_parquet(index = False)
+        azure_utils.upload_blob(parquet_file, f"bronze/FinancialData/sp500/{date.today()}", f"FinancialData_{ticker}.parquet")
+    
     except Exception as e:
         logging.error(f'Error occurred while fetching and uploading financials data: {str(e)}')

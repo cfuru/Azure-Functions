@@ -175,6 +175,9 @@ class StockFundamentals:
         self.income_statement = None
         self.balance_sheet = None
         self.cash_flow = None
+        self.valuation_measure = None
+        self.asset_profile = None
+        self.financial_data = None
 
     def fetch_data(self):
         self.income_statement = self.ticker.income_statement(frequency = 'q', trailing = False).sort_values('asOfDate').set_index("asOfDate")
@@ -185,6 +188,14 @@ class StockFundamentals:
         
         self.cash_flow = self.ticker.cash_flow(frequency = 'q', trailing = False).sort_values('asOfDate').set_index("asOfDate")
         self.cash_flow["Ticker"] = self.symbol
+        
+        self.valuation_measure = self.ticker.valuation_measures
+        self.valuation_measure = self.valuation_measure[~self.valuation_measure.EnterpriseValue.isnull()]
+        
+        self.asset_profile = pd.DataFrame(self.ticker.asset_profile).T
+        self.asset_profile = self.asset_profile.drop(columns = ["companyOfficers"])
+        
+        self.financial_data = pd.DataFrame(self.ticker.financial_data).T
                 
 class PiotroskiScoreCalculator:
     def __init__(self, stock):
@@ -271,7 +282,6 @@ class PiotroskiScoreCalculator:
         scores_df = pd.DataFrame(score_data, columns=['Date', 'ROA', 'CFO', 'Delta ROA', 'Quality of Earnings', 
                                                       'Delta Leverage', 'Delta Liquidity', 'New Equity', 
                                                       'Gross Margin', 'Asset Turnover', 'Piotroski Score'])
-        scores_df.set_index('Date', inplace=True)
 
         return scores_df
 
